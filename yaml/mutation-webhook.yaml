@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mutation-webhook
+  namespace: default
+  labels:
+    app: mutation-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mutation-webhook
+  template:
+    metadata:
+      labels:
+        app: mutation-webhook
+        webhook: enabled
+    spec:
+      containers:
+        - name: mutation-webhook
+          image: wyx20000905/mutationwebhook:v1.0
+          imagePullPolicy: Always
+          ports:
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+          volumeMounts:
+            - name: mutation-webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+      volumes:
+        - name: mutation-webhook-certs
+          secret:
+            secretName: mutation-webhook-certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mutation-webhook
+  namespace: default
+spec:
+  selector:
+    app: mutation-webhook
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8443
