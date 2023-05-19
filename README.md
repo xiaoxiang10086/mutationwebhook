@@ -186,22 +186,20 @@ func mutateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	annotations := pod.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-
-	if annotations["ossp"] == "2023" {
-		container := corev1.Container{
-			Name:  "injected-container",
-			Image: "busybox",
-			Command: []string{
-				"sh",
-				"-c",
-				"echo 'Hello from the injected container!' && sleep 3600",
-			},
+	labels := pod.GetLabels()
+	if labels != nil {
+		if value, ok := labels["ossp"]; ok && value == "2023" {
+			container := corev1.Container{
+				Name:  "injected-container",
+				Image: "busybox",
+				Command: []string{
+					"sh",
+					"-c",
+					"echo 'Hello from the injected container!' && sleep 3600",
+				},
+			}
+			pod.Spec.Containers = append(pod.Spec.Containers, container)
 		}
-		pod.Spec.Containers = append(pod.Spec.Containers, container)
 	}
 
 	patchBytes, err := createPatch(&pod)
