@@ -60,6 +60,7 @@ func mutateHandler(w http.ResponseWriter, r *http.Request) {
 
 	admissionReviewResponse := v1beta1.AdmissionReview{
 		Response: &v1beta1.AdmissionResponse{
+			UID:     admissionReviewReq.Request.UID,
 			Allowed: true,
 			Patch:   patchBytes,
 			PatchType: func() *v1beta1.PatchType {
@@ -67,6 +68,7 @@ func mutateHandler(w http.ResponseWriter, r *http.Request) {
 				return &pt
 			}(),
 		},
+		TypeMeta: admissionReviewReq.TypeMeta,
 	}
 
 	if err := json.NewEncoder(w).Encode(admissionReviewResponse); err != nil {

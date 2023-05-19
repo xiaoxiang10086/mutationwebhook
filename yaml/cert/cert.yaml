@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mutation-webhook-certs
+  namespace: default
+spec:
+  dnsNames:
+    - mutation-webhook.default.svc
+  issuerRef:
+    kind: Issuer
+    name: selfsigned-issuer
+  secretName: mutation-webhook-certs
