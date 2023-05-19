@@ -8,6 +8,6 @@ kubectl get pods -l app=mutation-webhook -o name
 #kubectl describe replicaset mutation-webhook-585c789755
 #kubectl get svc
 #kubectl describe svc mutation-webhook
-#kubectl describe pod mutation-webhook-585c789755-mldx6
+kubectl describe pod/mutation-webhook-585c789755-qst7j
 
-kubectl logs pod/mutation-webhook-585c789755-r955c
+kubectl logs pod/mutation-webhook-585c789755-qst7j

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -15,13 +16,77 @@ const (
 	KeyFile  = "/etc/webhook/certs/tls.key"
 )
 
-func main() {
-	fmt.Println("Hello World!")
-	http.HandleFunc("/mutate", mutateHandler)
-	log.Fatal(http.ListenAndServeTLS(":8443", CertFile, KeyFile, nil))
+// Webhook implements a mutating webhook for automatic container injection.
+type Webhook struct {
+	certFile string
+	keyFile  string
+	cert     *tls.Certificate
+
+	server *http.Server
 }
 
-func mutateHandler(w http.ResponseWriter, r *http.Request) {
+func (wh *Webhook) getCert(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+	return wh.cert, nil
+}
+
+// WebhookParameters configures parameters for the mutation webhook.
+type WebhookParameters struct {
+	// CertFile is the path to the x509 certificate for https.
+	CertFile string
+
+	// KeyFile is the path to the x509 private key matching `CertFile`.
+	KeyFile string
+
+	// Port is the webhook port, e.g. typically 443 for https.
+	Port int
+}
+
+// NewWebhook creates a new instance of a mutating webhook for automatic sidecar injection.
+func NewWebhook(p WebhookParameters) (*Webhook, error) {
+	pair, err := tls.LoadX509KeyPair(p.CertFile, p.KeyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	wh := &Webhook{
+		certFile: p.CertFile,
+		keyFile:  p.KeyFile,
+		cert:     &pair,
+	}
+
+	mux := http.NewServeMux()
+	wh.server = &http.Server{
+		Addr:      fmt.Sprintf(":%v", p.Port),
+		TLSConfig: &tls.Config{GetCertificate: wh.getCert},
+	}
+	mux.HandleFunc("/mutate", wh.serveMutate)
+	wh.server.Handler = mux
+
+	return wh, nil
+}
+
+func (wh *Webhook) Run() {
+	if err := wh.server.ListenAndServeTLS("", ""); err != nil {
+		log.Fatalf("failed to listen and serve webhook server: %v", err)
+	}
+}
+
+func main() {
+	parameters := WebhookParameters{
+		CertFile: CertFile,
+		KeyFile:  KeyFile,
+		Port:     8443,
+	}
+
+	wh, err := NewWebhook(parameters)
+	if err != nil {
+		fmt.Errorf("failed to create mutate webhook: %v", err)
+	}
+
+	wh.Run()
+}
+
+func (wh *Webhook) serveMutate(w http.ResponseWriter, r *http.Request) {
 	var admissionReviewReq v1beta1.AdmissionReview
 	if err := json.NewDecoder(r.Body).Decode(&admissionReviewReq); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -32,24 +97,6 @@ func mutateHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(admissionReviewReq.Request.Object.Raw, &pod); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	annotations := pod.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-
-	if annotations["ossp"] == "2023" {
-		container := corev1.Container{
-			Name:  "injected-container",
-			Image: "busybox",
-			Command: []string{
-				"sh",
-				"-c",
-				"echo 'Hello from the injected container!' && sleep 3600",
-			},
-		}
-		pod.Spec.Containers = append(pod.Spec.Containers, container)
 	}
 
 	patchBytes, err := createPatch(&pod)
@@ -80,21 +127,27 @@ func mutateHandler(w http.ResponseWriter, r *http.Request) {
 func createPatch(pod *corev1.Pod) ([]byte, error) {
 	var patch []patchOperation
 
-	container := corev1.Container{
-		Name:  "injected-container",
-		Image: "busybox",
-		Command: []string{
-			"sh",
-			"-c",
-			"echo 'Hello from the injected container!' && sleep 3600",
-		},
-	}
+	labels := pod.GetLabels()
+	if labels != nil {
+		if value, ok := labels["ossp"]; ok && value == "2023" {
+			container := corev1.Container{
+				Name:  "injected-container",
+				Image: "busybox",
+				Command: []string{
+					"sh",
+					"-c",
+					"echo 'Hello from the injected container!' && sleep 3600",
+				},
+			}
+			pod.Spec.Containers = append(pod.Spec.Containers, container)
 
-	patch = append(patch, patchOperation{
-		Op:    "add",
-		Path:  "/spec/containers/-",
-		Value: container,
-	})
+			patch = append(patch, patchOperation{
+				Op:    "add",
+				Path:  "/spec/containers/-",
+				Value: container,
+			})
+		}
+	}
 
 	return json.Marshal(patch)
 }
