@@ -1,5 +1,37 @@
 # PreTask of OSPP 2023 Layotto
 
+- [PreTask of OSPP 2023 Layotto](#pretask-of-ospp-2023-layotto)
+	- [任务要求](#任务要求)
+		- [前置知识](#前置知识)
+		- [目标](#目标)
+		- [注入数据](#注入数据)
+		- [输出](#输出)
+		- [提交](#提交)
+	- [Kind](#kind)
+		- [Kind简介](#kind简介)
+		- [在 WSL2 中安装 kind](#在-wsl2-中安装-kind)
+		- [使用 Kubectl 与Kind 集群进行交互](#使用-kubectl-与kind-集群进行交互)
+	- [Mutation Webhook](#mutation-webhook)
+		- [Mutation Webhook 介绍](#mutation-webhook-介绍)
+		- [如何实现 Mutation Webhook 的部署？](#如何实现-mutation-webhook-的部署)
+	- [方案设计](#方案设计)
+		- [编写Mutation Webhook代码](#编写mutation-webhook代码)
+				- [第一版代码](#第一版代码)
+				- [第二版代码](#第二版代码)
+		- [将 Mutation Webhook 打包为 Docker 镜像](#将-mutation-webhook-打包为-docker-镜像)
+		- [创建 Kubernetes Secret 对象](#创建-kubernetes-secret-对象)
+		- [创建 Deployment 和 Service 对象](#创建-deployment-和-service-对象)
+		- [创建 MutatingWebhookConfiguration 对象](#创建-mutatingwebhookconfiguration-对象)
+		- [使用 cert-manager 来颁发证书](#使用-cert-manager-来颁发证书)
+		- [遇到的问题](#遇到的问题)
+			- [问题1](#问题1)
+			- [问题2](#问题2)
+			- [问题3](#问题3)
+			- [问题4](#问题4)
+			- [问题5](#问题5)
+	- [测试 Mutation Webhook](#测试-mutation-webhook)
+
+
 ## 任务要求
 
 ### 前置知识
