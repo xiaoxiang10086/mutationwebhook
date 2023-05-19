@@ -874,5 +874,8 @@ kubectl logs test-pod -c injected-container
 
 完结撒花！
 
+## 心得
 
+通过完成本次任务，我进一步了解了 Kubernetes 中的 Webhook 机制和如何使用 Golang 编写一个 mutation webhook。我学会了如何创建一个简单的 HTTP 服务，以及如何将该服务部署到 Kubernetes 中，并通过 MutatingWebhookConfiguration 对象将其注册到 API Server 中。
 
+本次任务让我更深入地了解了 Kubernetes 的工作原理和 Golang 的编程技术，同时也提高了我的操作和调试能力。
