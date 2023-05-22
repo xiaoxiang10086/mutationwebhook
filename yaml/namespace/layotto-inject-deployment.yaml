@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layotto-inject-deployment
+  namespace: layotto-namespace
+  labels:
+    app: layotto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: layotto
+  template:
+    metadata:
+      labels:
+        app: layotto
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
