@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layotto-deployment
+  namespace: layotto-namespace
+  labels:
+    app: layotto
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: layotto
+  template:
+    metadata:
+      labels:
+        app: layotto
+        # Add the following label to disable Layotto Sidecar injection for this pod
+        mosn.io/sidecar-inject: "false"
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
