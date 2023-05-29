@@ -1,3 +1,2 @@
-**/*.crt
-**/*.key
-.idea/
+#intellij
+.idea

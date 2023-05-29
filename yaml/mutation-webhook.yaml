@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: mutation-webhook
-          image: wyx20000905/mutationwebhook:v1.0
+          image: wyx20000905/mutationwebhook:cobra
           imagePullPolicy: Always
           ports:
             - name: https

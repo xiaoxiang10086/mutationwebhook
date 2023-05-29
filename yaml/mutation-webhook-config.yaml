@@ -13,7 +13,7 @@ webhooks:
         path: "/mutate"
         port: 443
     sideEffects: None
-    admissionReviewVersions: [ "v1", "v1beta1" ]
+    admissionReviewVersions: [ "v1" ]
     rules:
       - apiGroups:
           - ""
@@ -23,3 +23,6 @@ webhooks:
           - CREATE
         resources:
           - pods
+    namespaceSelector:
+      matchLabels:
+        mosn.io/layotto-inject: "true"
